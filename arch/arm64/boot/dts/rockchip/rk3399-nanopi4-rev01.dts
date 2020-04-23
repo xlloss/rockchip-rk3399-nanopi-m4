@@ -22,6 +22,106 @@
 / {
 	model = "FriendlyElec NanoPi M4";
 	compatible = "friendlyelec,nanopi-m4", "rockchip,rk3399";
+
+	gpio-keys {
+		compatible = "gpio-keys-polled";
+		poll-interval = <100>;
+		status = "disabled";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&key_0 &key_1 &key_2 &key_3>;
+
+		user_k1 {
+			label = "User Push Button K1";
+			linux,code = <KEY_RED>;
+			gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_HIGH>;
+		};
+
+		user_k2 {
+			label = "User Push Button K2";
+			linux,code = <KEY_GREEN>;
+			gpios = <&gpio4 RK_PC1 GPIO_ACTIVE_HIGH>;
+		};
+
+		user_k3 {
+			label = "User Push Button K3";
+			linux,code = <KEY_YELLOW>;
+			gpios = <&gpio1 RK_PC2 GPIO_ACTIVE_HIGH>;
+		};
+
+		user_k4 {
+			label = "User Push Button K4";
+			linux,code = <KEY_BLUE>;
+			gpios = <&gpio1 RK_PC6 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+    led-ioctl {
+        status = "okay";
+        compatible = "gpio,led-sample";
+        pinctrl-names = "default";
+        pinctrl-0 = <&led_0 &led_1 &led_2 &led_3>;
+        led0-gpios = <&gpio1 RK_PA0 GPIO_ACTIVE_LOW>;
+        led1-gpios = <&gpio1 RK_PA1 GPIO_ACTIVE_LOW>;
+        led2-gpios = <&gpio1 RK_PA3 GPIO_ACTIVE_LOW>;
+        led3-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_LOW>;
+    };
+
+    irq-gpio-sample {
+        status = "disabled";
+        //compatible = "gpiokey,irq-sample";
+        compatible = "sample,key-bad";
+        pinctrl-names = "default";
+        pinctrl-0 = <&key_0 &key_1 &key_2 &key_3>;
+        key0-gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_LOW>;
+    };
+
+    platdrvsample:platdrvsample {
+        status = "okay";
+        compatible = "sample-test,platform-driver";
+    };
+
+    tiny4412-simple-key {
+        compatible = "tiny4412,simple-key";
+        status = "okay";
+        pinctrl-names = "default";
+        pinctrl-0 = <&key_0>;
+        key0-gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_LOW>;
+    };
+
+};
+
+
+&pinctrl {
+	btn {
+		key_0: key_0 {
+			rockchip,pins = <4 RK_PC0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		key_1: key_1 {
+			rockchip,pins = <4 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		key_2: key_2 {
+			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		key_3: key_3 {
+			rockchip,pins = <1 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+   led {
+        led_0: led_0 {
+            rockchip,pins = <1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
+        };
+        led_1: led_1 {
+            rockchip,pins = <1 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
+        };
+        led_2: led_2 {
+            rockchip,pins = <1 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+        };
+        led_3: led_3 {
+            rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+        };
+    };
 };
 
 &mach {
@@ -50,4 +150,24 @@
 	simple-audio-card,cpu {
 		sound-dai = <&i2s1>;
 	};
+};
+
+&i2c7 {
+    status = "okay";
+};
+
+&i2c2 {
+    status = "okay";
+    sht21@40 {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        compatible = "sensirion,sht21";
+        reg = <0x40>;
+    };
+
+    isl29023@44 {
+        status = "okay";
+        compatible = "isil,isl29023";
+        reg = <0x44>;
+    };
 };
