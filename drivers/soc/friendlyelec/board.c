@@ -58,7 +58,7 @@ static int board_sys_probe(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
 	struct device_node *root;
-
+	pr_info("SLASH Ver\n");
 	root = of_find_node_by_path("/");
 
 	of_property_read_u32(np, "hwrev", &board_rev);
