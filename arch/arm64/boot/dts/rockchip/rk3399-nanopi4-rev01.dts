@@ -23,6 +23,15 @@
 	model = "FriendlyElec NanoPi M4";
 	compatible = "friendlyelec,nanopi-m4", "rockchip,rk3399";
 
+    gpio-led {
+        status = "okay";
+        compatible = "sample,gpio-led";
+        led0-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+        led1-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+        led2-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+        led3-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+    };
+
 	gpio-keys {
 		compatible = "gpio-keys-polled";
 		poll-interval = <100>;
@@ -68,9 +77,9 @@
     };
 
     irq-gpio-sample {
-        status = "disabled";
-        //compatible = "gpiokey,irq-sample";
-        compatible = "sample,key-bad";
+        status = "okay";
+        compatible = "gpiokey,irq-sample";
+        //compatible = "sample,key-bad";
         pinctrl-names = "default";
         pinctrl-0 = <&key_0 &key_1 &key_2 &key_3>;
         key0-gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_LOW>;
@@ -89,7 +98,42 @@
         key0-gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_LOW>;
     };
 
+
 };
+
+&spi1 {
+    status = "okay";
+    flash: flash@0 {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "w25q128", "jedec,spi-nor";
+        reg = <0>;
+        spi-max-frequency = <1000000>;
+
+        partition@0 {
+                label = "partition1";
+                reg = <0x00000000 0x00040000>;
+                read-only;
+        };
+
+        partition@40000 {
+                label = "partition2";
+                reg = <0x00040000 0x00400000>;
+                read-only;
+        };
+
+        partition@440000 {
+                label = "partition3";
+                reg = <0x00440000 0x03bc0000>;
+        };
+    };
+
+    spidev1: spidev@1 {
+        status = "okay";
+    };
+
+};
+
 
 
 &pinctrl {
