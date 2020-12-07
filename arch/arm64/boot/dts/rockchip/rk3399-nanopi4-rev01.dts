@@ -24,7 +24,7 @@
 	compatible = "friendlyelec,nanopi-m4", "rockchip,rk3399";
 
     gpio-led {
-        status = "okay";
+        status = "disabled";
         compatible = "sample,gpio-led";
         led0-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
         led1-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
@@ -66,7 +66,7 @@
 	};
 
     led-ioctl {
-        status = "okay";
+        status = "disabled";
         compatible = "gpio,led-sample";
         pinctrl-names = "default";
         pinctrl-0 = <&led_0 &led_1 &led_2 &led_3>;
@@ -77,7 +77,7 @@
     };
 
     irq-gpio-sample {
-        status = "okay";
+        status = "disabled";
         compatible = "gpiokey,irq-sample";
         //compatible = "sample,key-bad";
         pinctrl-names = "default";
@@ -92,12 +92,20 @@
 
     tiny4412-simple-key {
         compatible = "tiny4412,simple-key";
-        status = "okay";
+        status = "disabled";
         pinctrl-names = "default";
         pinctrl-0 = <&key_0>;
         key0-gpios = <&gpio4 RK_PC0 GPIO_ACTIVE_LOW>;
     };
 
+    sht15: sht15@0 {
+        status = "okay";
+        compatible = "sensirion,sht15";
+        pinctrl-names = "default";
+        pinctrl-0 = <&sht15_sck &sht15_data>;
+        sck-gpios = <&gpio1 RK_PC6 GPIO_ACTIVE_HIGH>;
+        data-gpios = <&gpio1 RK_PC7 GPIO_ACTIVE_HIGH>;
+    };
 
 };
 
@@ -134,9 +142,16 @@
 
 };
 
-
-
 &pinctrl {
+	sht15_gpio {
+		sht15_sck: sht15_sck {
+			rockchip,pins = <1 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		sht15_data: sht15_data {
+			rockchip,pins = <1 RK_PC7 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
 	btn {
 		key_0: key_0 {
 			rockchip,pins = <4 RK_PC0 RK_FUNC_GPIO &pcfg_pull_none>;

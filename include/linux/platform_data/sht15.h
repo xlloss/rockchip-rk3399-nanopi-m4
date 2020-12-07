@@ -27,8 +27,10 @@
  * @low_resolution:	flag to indicate the temp/humidity resolution to use.
  */
 struct sht15_platform_data {
-	int gpio_data;
-	int gpio_sck;
+	struct gpio_desc *gpio_data;
+	struct gpio_desc *gpio_sck;
+	int gpio_irq;
+	struct input_dev *input;
 	int supply_mv;
 	bool checksum;
 	bool no_otp_reload;
