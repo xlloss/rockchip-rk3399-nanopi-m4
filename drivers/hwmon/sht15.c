@@ -34,6 +34,8 @@
 #include <linux/slab.h>
 #include <linux/atomic.h>
 #include <linux/bitrev.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
 
 /* Commands */
 #define SHT15_MEASURE_TEMP		0x03
@@ -204,16 +206,17 @@ static int sht15_connection_reset(struct sht15_data *data)
 {
 	int i, err;
 
-	err = gpio_direction_output(data->pdata->gpio_data, 1);
+	err = gpiod_direction_output(data->pdata->gpio_data, 1);
 	if (err)
 		return err;
+
 	ndelay(SHT15_TSCKL);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
 	for (i = 0; i < 9; ++i) {
-		gpio_set_value(data->pdata->gpio_sck, 1);
+		gpiod_set_value(data->pdata->gpio_sck, 1);
 		ndelay(SHT15_TSCKH);
-		gpio_set_value(data->pdata->gpio_sck, 0);
+		gpiod_set_value(data->pdata->gpio_sck, 0);
 		ndelay(SHT15_TSCKL);
 	}
 	return 0;
@@ -226,11 +229,11 @@ static int sht15_connection_reset(struct sht15_data *data)
  */
 static inline void sht15_send_bit(struct sht15_data *data, int val)
 {
-	gpio_set_value(data->pdata->gpio_data, val);
+	gpiod_set_value(data->pdata->gpio_data, val);
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
 	ndelay(SHT15_TSCKH);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL); /* clock low time */
 }
 
@@ -247,23 +250,23 @@ static int sht15_transmission_start(struct sht15_data *data)
 	int err;
 
 	/* ensure data is high and output */
-	err = gpio_direction_output(data->pdata->gpio_data, 1);
+	err = gpiod_direction_output(data->pdata->gpio_data, 1);
 	if (err)
 		return err;
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
 	ndelay(SHT15_TSCKH);
-	gpio_set_value(data->pdata->gpio_data, 0);
+	gpiod_set_value(data->pdata->gpio_data, 0);
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
 	ndelay(SHT15_TSCKH);
-	gpio_set_value(data->pdata->gpio_data, 1);
+	gpiod_set_value(data->pdata->gpio_data, 1);
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
 	return 0;
 }
@@ -291,20 +294,21 @@ static int sht15_wait_for_response(struct sht15_data *data)
 {
 	int err;
 
-	err = gpio_direction_input(data->pdata->gpio_data);
+	err = gpiod_direction_input(data->pdata->gpio_data);
 	if (err)
 		return err;
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
+
 	ndelay(SHT15_TSCKH);
-	if (gpio_get_value(data->pdata->gpio_data)) {
-		gpio_set_value(data->pdata->gpio_sck, 0);
+	if (gpiod_get_value(data->pdata->gpio_data)) {
+		gpiod_set_value(data->pdata->gpio_sck, 0);
 		dev_err(data->dev, "Command not acknowledged\n");
 		err = sht15_connection_reset(data);
 		if (err)
 			return err;
 		return -EIO;
 	}
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
 	return 0;
 }
@@ -359,17 +363,17 @@ static int sht15_ack(struct sht15_data *data)
 {
 	int err;
 
-	err = gpio_direction_output(data->pdata->gpio_data, 0);
+	err = gpiod_direction_output(data->pdata->gpio_data, 0);
 	if (err)
 		return err;
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_data, 1);
+	gpiod_set_value(data->pdata->gpio_data, 1);
 
-	return gpio_direction_input(data->pdata->gpio_data);
+	return gpiod_direction_input(data->pdata->gpio_data);
 }
 
 /**
@@ -382,13 +386,13 @@ static int sht15_end_transmission(struct sht15_data *data)
 {
 	int err;
 
-	err = gpio_direction_output(data->pdata->gpio_data, 1);
+	err = gpiod_direction_output(data->pdata->gpio_data, 1);
 	if (err)
 		return err;
 	ndelay(SHT15_TSU);
-	gpio_set_value(data->pdata->gpio_sck, 1);
+	gpiod_set_value(data->pdata->gpio_sck, 1);
 	ndelay(SHT15_TSCKH);
-	gpio_set_value(data->pdata->gpio_sck, 0);
+	gpiod_set_value(data->pdata->gpio_sck, 0);
 	ndelay(SHT15_TSCKL);
 	return 0;
 }
@@ -404,10 +408,10 @@ static u8 sht15_read_byte(struct sht15_data *data)
 
 	for (i = 0; i < 8; ++i) {
 		byte <<= 1;
-		gpio_set_value(data->pdata->gpio_sck, 1);
+		gpiod_set_value(data->pdata->gpio_sck, 1);
 		ndelay(SHT15_TSCKH);
-		byte |= !!gpio_get_value(data->pdata->gpio_data);
-		gpio_set_value(data->pdata->gpio_sck, 0);
+		byte |= !!gpiod_get_value(data->pdata->gpio_data);
+		gpiod_set_value(data->pdata->gpio_sck, 0);
 		ndelay(SHT15_TSCKL);
 	}
 	return byte;
@@ -427,7 +431,7 @@ static int sht15_send_status(struct sht15_data *data, u8 status)
 	err = sht15_send_cmd(data, SHT15_WRITE_STATUS);
 	if (err)
 		return err;
-	err = gpio_direction_output(data->pdata->gpio_data, 1);
+	err = gpiod_direction_output(data->pdata->gpio_data, 1);
 	if (err)
 		return err;
 	ndelay(SHT15_TSU);
@@ -527,14 +531,15 @@ static int sht15_measurement(struct sht15_data *data,
 	if (ret)
 		return ret;
 
-	ret = gpio_direction_input(data->pdata->gpio_data);
+	ret = gpiod_direction_input(data->pdata->gpio_data);
 	if (ret)
 		return ret;
 	atomic_set(&data->interrupt_handled, 0);
 
-	enable_irq(gpio_to_irq(data->pdata->gpio_data));
-	if (gpio_get_value(data->pdata->gpio_data) == 0) {
-		disable_irq_nosync(gpio_to_irq(data->pdata->gpio_data));
+
+	enable_irq(data->pdata->gpio_irq);
+	if (gpiod_get_value(data->pdata->gpio_data) == 0) {
+		disable_irq_nosync(data->pdata->gpio_irq);
 		/* Only relevant if the interrupt hasn't occurred. */
 		if (!atomic_read(&data->interrupt_handled))
 			schedule_work(&data->read_work);
@@ -546,7 +551,7 @@ static int sht15_measurement(struct sht15_data *data,
 		data->state = SHT15_READING_NOTHING;
 		return -EIO;
 	} else if (ret == 0) { /* timeout occurred */
-		disable_irq_nosync(gpio_to_irq(data->pdata->gpio_data));
+		disable_irq_nosync(data->pdata->gpio_irq);
 		ret = sht15_connection_reset(data);
 		if (ret)
 			return ret;
@@ -825,15 +830,15 @@ static void sht15_bh_read_data(struct work_struct *work_s)
 			       read_work);
 
 	/* Firstly, verify the line is low */
-	if (gpio_get_value(data->pdata->gpio_data)) {
+	if (gpiod_get_value(data->pdata->gpio_data)) {
 		/*
 		 * If not, then start the interrupt again - care here as could
 		 * have gone low in meantime so verify it hasn't!
 		 */
 		atomic_set(&data->interrupt_handled, 0);
-		enable_irq(gpio_to_irq(data->pdata->gpio_data));
+		enable_irq(data->pdata->gpio_irq);
 		/* If still not occurred or another handler was scheduled */
-		if (gpio_get_value(data->pdata->gpio_data)
+		if (gpiod_get_value(data->pdata->gpio_data)
 		    || atomic_read(&data->interrupt_handled))
 			return;
 	}
@@ -928,11 +933,11 @@ static int sht15_probe(struct platform_device *pdev)
 	data->dev = &pdev->dev;
 	init_waitqueue_head(&data->wait_queue);
 
-	if (dev_get_platdata(&pdev->dev) == NULL) {
-		dev_err(&pdev->dev, "no platform data supplied\n");
-		return -EINVAL;
-	}
 	data->pdata = dev_get_platdata(&pdev->dev);
+	data->pdata = devm_kzalloc(&pdev->dev, sizeof(data->pdata), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
+
 	data->supply_uv = data->pdata->supply_mv * 1000;
 	if (data->pdata->checksum)
 		data->checksumming = true;
@@ -975,21 +980,26 @@ static int sht15_probe(struct platform_device *pdev)
 	}
 
 	/* Try requesting the GPIOs */
-	ret = devm_gpio_request_one(&pdev->dev, data->pdata->gpio_sck,
-			GPIOF_OUT_INIT_LOW, "SHT15 sck");
-	if (ret) {
-		dev_err(&pdev->dev, "clock line GPIO request failed\n");
+	data->pdata->gpio_sck = devm_gpiod_get_optional(&pdev->dev,
+		"sck", GPIOD_OUT_LOW);
+	if (IS_ERR(data->pdata->gpio_sck)) {
+		ret = PTR_ERR(data->pdata->gpio_sck);
+		if (ret != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to get sck GPIO: %d\n", ret);
 		goto err_release_reg;
 	}
 
-	ret = devm_gpio_request(&pdev->dev, data->pdata->gpio_data,
-				"SHT15 data");
-	if (ret) {
-		dev_err(&pdev->dev, "data line GPIO request failed\n");
+	data->pdata->gpio_data = devm_gpiod_get_optional(&pdev->dev,
+		"data", GPIOD_OUT_HIGH);
+	if (IS_ERR(data->pdata->gpio_data)) {
+		ret = PTR_ERR(data->pdata->gpio_data);
+		if (ret != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to get data GPIO: %d\n", ret);
 		goto err_release_reg;
 	}
 
-	ret = devm_request_irq(&pdev->dev, gpio_to_irq(data->pdata->gpio_data),
+	data->pdata->gpio_irq = gpiod_to_irq(data->pdata->gpio_data);
+	ret = devm_request_irq(&pdev->dev, data->pdata->gpio_irq,
 			       sht15_interrupt_fired,
 			       IRQF_TRIGGER_FALLING,
 			       "sht15 data",
@@ -998,7 +1008,8 @@ static int sht15_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to get irq for data line\n");
 		goto err_release_reg;
 	}
-	disable_irq_nosync(gpio_to_irq(data->pdata->gpio_data));
+	disable_irq_nosync(data->pdata->gpio_irq);
+
 	ret = sht15_connection_reset(data);
 	if (ret)
 		goto err_release_reg;
@@ -1072,9 +1083,21 @@ static const struct platform_device_id sht15_device_ids[] = {
 };
 MODULE_DEVICE_TABLE(platform, sht15_device_ids);
 
+#ifdef CONFIG_OF
+/* Match table for device tree binding */
+static const struct of_device_id sht15_of_match[] = {
+	{ .compatible = "sensirion,sht15", .data = NULL},
+	{},
+};
+MODULE_DEVICE_TABLE(of, sht15_of_match);
+#else
+#define sht15_of_match NULL
+#endif
+
 static struct platform_driver sht15_driver = {
 	.driver = {
 		.name = "sht15",
+		.of_match_table = sht15_of_match,
 	},
 	.probe = sht15_probe,
 	.remove = sht15_remove,
