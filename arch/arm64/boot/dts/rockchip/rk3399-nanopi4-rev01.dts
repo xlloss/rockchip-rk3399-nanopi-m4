@@ -51,3 +51,57 @@
 		sound-dai = <&i2s1>;
 	};
 };
+
+&hdmi_hdcp2 {
+    status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+
+	ads1115: ads1115@48 {
+		compatible = "ti,ads1115";
+		reg = <0x48>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <0 IRQ_TYPE_LEVEL_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ads1115_int>;
+		#io-channel-cells = <1>;
+		io-channel-ranges;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		channel@0 {
+			reg = <0>;
+			ti,gain = <1>;
+			ti,datarate = <4>;
+		};
+
+		channel@1 {
+			reg = <1>;
+			ti,gain = <1>;
+			ti,datarate = <4>;
+		};
+
+		channel@2 {
+			reg = <2>;
+			ti,gain = <1>;
+			ti,datarate = <4>;
+		};
+
+		channel@3 {
+			reg = <2>;
+			ti,gain = <1>;
+			ti,datarate = <4>;
+		};
+	};
+};
+
+&pinctrl {
+	ads_1115 {
+		ads1115_int: ads1115_int {
+			rockchip,pins = <1 0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+};
