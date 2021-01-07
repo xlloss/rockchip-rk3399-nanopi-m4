@@ -419,4 +419,8 @@ config MOUSE_NAVPOINT_PXA27x
 	  To compile this driver as a module, choose M here: the
 	  module will be called navpoint.
 
+config FAKEER_MOUSE
+	tristate "Faker Mouse Driver"
+	help
+	  This driver is a faker mouse for test
 endif
