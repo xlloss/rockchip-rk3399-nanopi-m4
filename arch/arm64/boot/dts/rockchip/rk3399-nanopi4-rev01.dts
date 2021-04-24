@@ -48,6 +48,22 @@
 		led2-gpios = <&gpio1 RK_PA3 GPIO_ACTIVE_LOW>;
 		led3-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_LOW>;
 	};
+
+	gpio-mouse {
+		status = "okay";
+		compatible = "gpio,mouse";
+		pinctrl-names = "default";
+		pinctrl-0 = <&btn_up &btn_down &btn_left &btn_right &btn_btnleft>;
+
+		btn-up = <145>;
+		btn-down = <144>;
+		btn-left = <50>;
+		btn-right = <54>;
+		btn-btnleft = <55>;
+
+		scan_ms = <10>;
+	};
+
 };
 
 
@@ -64,6 +80,24 @@
 		};
 		led_3: led_3 {
 			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	gpio_mouse {
+		btn_up: btn_up {
+			rockchip,pins = <4 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		btn_down: btn_down {
+			rockchip,pins = <4 RK_PC0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		btn_left: btn_left {
+			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		btn_right: btn_right {
+			rockchip,pins = <1 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		btn_btnleft: btn_btnleft {
+			rockchip,pins = <1 RK_PC7 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 };
@@ -101,9 +135,9 @@
 };
 
 &i2c2 {
-	status = "okay";
-
-#define USE_KERNEL_EEPROM_DRIVER
+	status = "disabled";
+#ifdef ENABLE_EEPROM
+#ifdef USE_KERNEL_EEPROM_DRIVER
 	at24@50 {
 		compatible = "at24,24c08";
 		reg = <0x50>;
@@ -114,6 +148,7 @@
 		compatible = "at24cxx";
 		reg = <0x50>;
 	};
+#endif
 #endif
 
 	ads1115: ads1115@48 {

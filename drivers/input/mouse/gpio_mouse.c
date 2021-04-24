@@ -10,11 +10,18 @@
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#ifdef CONFIG_OF
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#endif
 #include <linux/input-polldev.h>
 #include <linux/gpio.h>
 #include <linux/gpio_mouse.h>
 
 
+#include <linux/slab.h>
+#define GPIO_MOUSE_PIN_MAX_LIMIT 5
 /*
  * Timer function which is run every scan_ms ms when the device is opened.
  * The dev input variable is set to the the input_dev pointer.
@@ -50,8 +57,45 @@ static int gpio_mouse_probe(struct platform_device *pdev)
 	struct gpio_mouse_platform_data *pdata = dev_get_platdata(&pdev->dev);
 	struct input_polled_dev *input_poll;
 	struct input_dev *input;
-	int pin, i;
-	int error;
+	int pin, i, gpio_value[GPIO_MOUSE_PIN_MAX_LIMIT], ret;
+	int error, scan_ms;
+	const char *gpio_name[GPIO_MOUSE_PIN_MAX_LIMIT] = {
+		"btn-up", "btn-down", "btn-left", "btn-right", "btn-btnleft"};
+
+	dev_info(&pdev->dev, "%s\n", __func__);
+
+#ifdef CONFIG_OF
+	pdata = kmalloc(sizeof(struct gpio_mouse_platform_data), GFP_KERNEL);
+	if (!pdata) {
+		dev_err(&pdev->dev, "kmalloc fail\n");
+		error = -ENXIO;
+		goto out;
+	}
+
+	memset(pdata->pins, -1, sizeof(pdata->pins));
+	for (i = 0; i < GPIO_MOUSE_PIN_MAX_LIMIT; i++) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+							gpio_name[i],
+							&gpio_value[i]);
+		if (ret) {
+			dev_err(&pdev->dev, "get gpio pin fial from dts\n");
+			error = -ENXIO;
+			goto out;
+		}
+		pdata->pins[i] = gpio_value[i];
+		dev_info(&pdev->dev, "pdata->pins[%d] %d\n", i, pdata->pins[i]);
+	}
+
+	ret = of_property_read_u32(pdev->dev.of_node,
+						"scan_ms",
+						&scan_ms);
+	if (ret) {
+		dev_info(&pdev->dev, "scan_ms read fial from dts\n");
+		scan_ms = 10;
+	}
+	pdata->scan_ms = scan_ms;
+	pdata->polarity = 1;
+#endif
 
 	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data\n");
@@ -65,7 +109,7 @@ static int gpio_mouse_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	for (i = 0; i < GPIO_MOUSE_PIN_MAX; i++) {
+	for (i = 0; i < GPIO_MOUSE_PIN_MAX_LIMIT; i++) {
 		pin = pdata->pins[i];
 
 		if (pin < 0) {
@@ -157,7 +201,7 @@ static int gpio_mouse_remove(struct platform_device *pdev)
 	input_unregister_polled_device(input);
 	input_free_polled_device(input);
 
-	for (i = 0; i < GPIO_MOUSE_PIN_MAX; i++) {
+	for (i = 0; i < GPIO_MOUSE_PIN_MAX_LIMIT; i++) {
 		pin = pdata->pins[i];
 		if (pin >= 0)
 			gpio_free(pin);
@@ -166,11 +210,22 @@ static int gpio_mouse_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_OF
+static const struct of_device_id gpio_mouse_dt_ids[] = {
+	{ .compatible = "gpio,mouse" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, gpio_mouse_dt_ids);
+#endif
+
 static struct platform_driver gpio_mouse_device_driver = {
 	.probe		= gpio_mouse_probe,
 	.remove		= gpio_mouse_remove,
 	.driver		= {
 		.name	= "gpio_mouse",
+#ifdef CONFIG_OF
+		.of_match_table = of_match_ptr(gpio_mouse_dt_ids),
+#endif
 	}
 };
 module_platform_driver(gpio_mouse_device_driver);
@@ -179,4 +234,3 @@ MODULE_AUTHOR("Hans-Christian Egtvedt <egtvedt@samfundet.no>");
 MODULE_DESCRIPTION("GPIO mouse driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:gpio_mouse"); /* work with hotplug and coldplug */
-
