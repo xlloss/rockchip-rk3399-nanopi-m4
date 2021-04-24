@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#define USE_KERNEL_EEPROM_DRIVER
 
 /dts-v1/;
 #include "rk3399-nanopi4-common.dtsi"
@@ -22,6 +23,49 @@
 / {
 	model = "FriendlyElec NanoPi M4";
 	compatible = "friendlyelec,nanopi-m4", "rockchip,rk3399";
+
+	platdrvsample:platdrvsample {
+		status = "okay";
+		compatible = "sample-test,platform-driver";
+		test-val = <12>;
+	};
+
+	led-sample {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		status = "okay";
+		compatible = "sample,led-sample-dts";
+		reg = <0x0 0xff320000 0x0 0x1000>, <0x0 0xff730000 0x0 0x1000>;
+	};
+
+	led-ioctl {
+		status = "okay";
+		compatible = "gpio,led-sample";
+		pinctrl-names = "default";
+		pinctrl-0 = <&led_0 &led_1 &led_2 &led_3>;
+		led0-gpios = <&gpio1 RK_PA0 GPIO_ACTIVE_LOW>;
+		led1-gpios = <&gpio1 RK_PA1 GPIO_ACTIVE_LOW>;
+		led2-gpios = <&gpio1 RK_PA3 GPIO_ACTIVE_LOW>;
+		led3-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_LOW>;
+	};
+};
+
+
+&pinctrl {
+	led {
+		led_0: led_0 {
+			rockchip,pins = <1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		led_1: led_1 {
+			rockchip,pins = <1 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		led_2: led_2 {
+			rockchip,pins = <1 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		led_3: led_3 {
+			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
 &mach {
@@ -58,6 +102,19 @@
 
 &i2c2 {
 	status = "okay";
+
+#define USE_KERNEL_EEPROM_DRIVER
+	at24@50 {
+		compatible = "at24,24c08";
+		reg = <0x50>;
+	};
+#else
+	at24cxx@50 {
+		status = "okay";
+		compatible = "at24cxx";
+		reg = <0x50>;
+	};
+#endif
 
 	ads1115: ads1115@48 {
 		compatible = "ti,ads1115";
