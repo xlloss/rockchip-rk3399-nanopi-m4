@@ -460,6 +460,13 @@ config BACKLIGHT_BD6107
 	help
 	  If you have a Rohm BD6107 say Y to enable the backlight driver.
 
+config BACKLIGHT_MCP4725
+	tristate "DAC MCP4725 Backlight"
+	depends on I2C
+	help
+	  If you have a DAC MCP4725 backlight say Y to enable the
+	  backlight driver.
+
 endif # BACKLIGHT_CLASS_DEVICE
 
 endif # BACKLIGHT_LCD_SUPPORT
