@@ -51,3 +51,16 @@
 		sound-dai = <&i2s1>;
 	};
 };
+
+&i2c2 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	mcp4725_backlight: mcp4725_backlight@60 {
+		compatible = "mcp4725,bl";
+		reg = <0x60>;
+		pinctrl-names = "default";
+		default-brightness-level = <10>;
+		status = "okay";
+	};
+};
