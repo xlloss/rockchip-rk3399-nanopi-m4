@@ -299,7 +299,7 @@
 
 	panel: edp-panel {
 		compatible = "lcds", "simple-panel";
-		status = "okay";
+		status = "disabled";
 
 		backlight = <&pwm_bl>;
 		power-supply = <&vcc_lcd>;
